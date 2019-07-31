@@ -29,6 +29,9 @@ class ViewController: UIViewController {
   @IBOutlet var tableView: UITableView!
   @IBOutlet var buttonMenu: UIButton!
   @IBOutlet var titleLabel: UILabel!
+    
+    @IBOutlet weak var menuHeightConstraint: NSLayoutConstraint!
+    
   
   //MARK: further class variables
   
@@ -40,11 +43,55 @@ class ViewController: UIViewController {
   
   @IBAction func actionToggleMenu(_ sender: AnyObject) {
     
+    menuHeightConstraint.constant = isMenuOpen ? 200.0 : 80.0
+    titleLabel.text = isMenuOpen ? "Select Item" : "Packing List"
+    
+    let angle : CGFloat = self.isMenuOpen ? .pi / 4 : 0.0
+    self.buttonMenu.transform = CGAffineTransform(rotationAngle: angle)
+    
+    UIView.animate(withDuration: 1.0, delay: 0.0, usingSpringWithDamping: 0.4, initialSpringVelocity: 10.0, options: .curveEaseIn, animations:  {
+        self.view.layoutIfNeeded()
+    })
+    
+    isMenuOpen = !isMenuOpen
+    
+    titleLabel.superview?.constraints.forEach { constraint in
+        if constraint.firstItem === titleLabel &&
+            constraint.firstAttribute == .centerX {
+            constraint.constant = isMenuOpen ? -100.0 : 0.0
+            return
+        }
+        
+        if constraint.identifier == "TitleCenterY"
+        {
+            constraint.isActive = false
+            
+            let newConstraint = NSLayoutConstraint(item: titleLabel, attribute: .centerY, relatedBy: .equal, toItem: titleLabel.superview, attribute: .centerY, multiplier: isMenuOpen ? 0.67 : 1.0, constant: 25.0)
+            newConstraint.identifier = "TitleCenterY"
+            newConstraint.isActive = true
+        }
+        
+        if isMenuOpen {
+            slider = HorizontalItemList(inView: view)
+            slider.didSelectItem = { index in
+                print("Add \(index)")
+                self.items.append(index)
+                self.tableView.reloadData()
+                self.actionToggleMenu(self)
+            }
+            
+            self.titleLabel.superview!.addSubview(slider)
+        } else {
+            slider.removeFromSuperview()
+        }
+    }
+    
   }
   
   func showItem(_ index: Int) {
     print("tapped item \(index)")
   }
+    
 }
 
 

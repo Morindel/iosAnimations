@@ -68,7 +68,7 @@ class ViewController: UIViewController {
   
   //MARK: custom methods
   
-  func changeFlight(to data: FlightData) {
+    func changeFlight(to data: FlightData, animated: Bool = false) {
     
     // populate the UI with the next flight's data
     summary.text = data.summary
@@ -77,13 +77,51 @@ class ViewController: UIViewController {
     departingFrom.text = data.departingFrom
     arrivingTo.text = data.arrivingTo
     flightStatus.text = data.flightStatus
-    bgImageView.image = UIImage(named: data.weatherImageName)
-    snowView.isHidden = !data.showWeatherEffects
+        
+        if animated {
+            fade(imageView: bgImageView,
+                 toImage: UIImage(named: data.weatherImageName)!,
+                 showEffects: data.showWeatherEffects)
+        } else {
+            bgImageView.image = UIImage(named: data.weatherImageName)
+            snowView.isHidden = !data.showWeatherEffects
+        }
     
     // schedule next flight
     delay(seconds: 3.0) {
-      self.changeFlight(to: data.isTakingOff ? parisToRome : londonToParis)
+      self.changeFlight(to: data.isTakingOff ? parisToRome : londonToParis, animated: true)
     }
   }
+    
+    func fade(imageView: UIImageView, toImage:UIImage, showEffects: Bool) {
+        UIView.transition(with: imageView, duration: 3.0, options: .transitionCrossDissolve, animations: {
+            imageView.image = toImage
+        }, completion: nil)
+        
+        UIView.animate(withDuration: 3.0, delay: 0.0, options: .curveEaseOut, animations: {
+            self.snowView.alpha = showEffects ? 1.0 : 0.0
+        }, completion: nil)
+    }
+    
+    func cubeTransition(label: UILabel, text: String, direction: AnimationDirection) {
+        
+        let auxLabel = UILabel(frame: label.frame)
+        auxLabel.text = text
+        auxLabel.font = label.font
+        auxLabel.textAlignment = label.textAlignment
+        auxLabel.textColor = label.textColor
+        auxLabel.backgroundColor = label.backgroundColor
 
+        let auxLabelOffset = CGFloat(direction.rawValue) * label.frame.size.height / 2.0
+        
+        auxLabel.transform = CGAffineTransform(scaleX: 1.0, y: 0.1).concatenating(CGAffineTransform(translationX: 0.0, y: auxLabelOffset))
+        
+        label.superview?.addSubview(auxLabel)
+        }
+
+}
+
+enum AnimationDirection: Int {
+    case positive = 1
+    case negative = -1
 }
